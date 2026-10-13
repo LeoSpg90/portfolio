@@ -1,0 +1,1520 @@
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0a0a0a;color:#f0f0ec;font-family:Arial,Helvetica,sans-serif}button{font:inherit}header{position:fixed;z-index:50;top:0;left:0;width:100%;display:grid;grid-template-columns:220px 1fr 80px;gap:20px;align-items:start;padding:18px 22px;background:linear-gradient(#0a0a0a 0%,rgba(10,10,10,.94) 70%,transparent);pointer-events:none}.brand,.filters,.about{pointer-events:auto}.brand{color:inherit;text-decoration:none;display:flex;flex-direction:column;font-size:9px;letter-spacing:.1em;gap:3px}.brand b{font-size:11px}.brand span{opacity:.42}.filters{display:flex;justify-content:center;gap:5px;flex-wrap:wrap;max-width:1000px;margin:auto}.filters button,.about{border:1px solid #343434;border-radius:99px;background:#0d0d0d;color:#888;padding:6px 9px;font-size:8px;letter-spacing:.07em;cursor:pointer}.filters button:hover,.filters button.active{background:#eee;color:#111;border-color:#eee}.about{justify-self:end}main,#viewport{width:100%;height:100%}#viewport{overflow:hidden;cursor:grab;touch-action:none}#viewport.dragging{cursor:grabbing}#world{position:absolute;left:50%;top:50%;width:3000px;height:2200px;transform-origin:0 0;will-change:transform}.tile{position:absolute;border:0;padding:0;background:#1a1a1a;cursor:pointer;box-shadow:0 14px 35px rgba(0,0,0,.38);transition:left .55s cubic-bezier(.2,.75,.2,1),top .55s cubic-bezier(.2,.75,.2,1),width .55s,height .55s,opacity .3s,transform .2s}.tile:hover{transform:scale(1.025);z-index:10}.tile.hidden{opacity:0;pointer-events:none}.visual{width:100%;height:100%;padding:12px;color:#111;background:linear-gradient(145deg,#e2e2dd,#92928d);display:flex;flex-direction:column;justify-content:space-between;text-align:left}.tile:nth-child(4n+2) .visual{background:linear-gradient(145deg,#d1ccc1,#858078)}.tile:nth-child(4n+3) .visual{background:linear-gradient(145deg,#c5cecd,#798280)}.tile:nth-child(4n) .visual{background:linear-gradient(145deg,#d6d0d5,#817b80)}.visual b{font-size:8px;letter-spacing:.1em}.visual strong{font-size:34px;line-height:.82;letter-spacing:-.06em}.visual small{font-size:7px;opacity:.55}.caption{position:absolute;left:0;top:calc(100% + 6px);font-size:8px;color:#8d8d8d;white-space:nowrap}.legend{position:fixed;left:22px;bottom:20px;z-index:40;font-size:9px;letter-spacing:.12em;display:flex;gap:10px}.legend span{opacity:.4}.hint{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;font-size:7px;letter-spacing:.13em;opacity:.3}.controls{position:fixed;right:20px;bottom:16px;z-index:40;display:flex}.controls button{width:34px;height:34px;border:1px solid #333;background:#111;color:#ddd;cursor:pointer}.controls button:hover{background:#eee;color:#111}dialog{width:min(900px,92vw);padding:0;border:0;background:#111;color:#eee}dialog::backdrop{background:rgba(0,0,0,.88)}.close{position:absolute;right:12px;top:12px;z-index:3;width:38px;height:38px;border:0;border-radius:50%;font-size:22px}.modalMedia{height:480px}.modalCopy{padding:22px}.modalCopy span{font-size:9px;letter-spacing:.1em;opacity:.45}.modalCopy h2{font-size:34px;margin:5px 0 8px;letter-spacing:-.04em}.modalCopy p{opacity:.55;font-size:12px}@media(max-width:760px){header{grid-template-columns:1fr auto;padding:14px}.brand span{display:none}.about{grid-column:2}.filters{position:fixed;left:10px;right:10px;top:49px;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}.filters button{white-space:nowrap}.hint{display:none}.legend{left:14px;bottom:15px}.controls{right:12px;bottom:12px}}
+/* V2.2 — centered canvas + soft liquid hover */
+.tile::after{
+ content:"";position:absolute;inset:-35%;pointer-events:none;opacity:0;
+ background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.32) 0%,rgba(255,255,255,.10) 18%,rgba(255,255,255,0) 43%);
+ mix-blend-mode:soft-light;transition:opacity .28s ease;filter:blur(7px)
+}
+.tile::before{
+ content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+ background:linear-gradient(115deg,transparent 24%,rgba(255,255,255,.13) 44%,rgba(255,255,255,.28) 50%,rgba(255,255,255,.08) 57%,transparent 76%);
+ transform:translateX(-65%);transition:opacity .25s,transform .65s cubic-bezier(.2,.7,.2,1);z-index:2
+}
+@media (hover:hover) and (pointer:fine){
+ .tile:hover::after{opacity:1}
+ .tile:hover::before{opacity:.8;transform:translateX(65%)}
+ .tile:hover{box-shadow:0 20px 55px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.12)}
+}
+dialog#modal{width:100vw;max-width:none;height:100vh;max-height:none;margin:0;padding:0;background:#090909;color:#eee}
+dialog#modal::backdrop{background:#090909}
+dialog#modal .close{position:fixed;right:22px;top:20px;z-index:20;width:44px;height:44px;border:1px solid #444;background:rgba(10,10,10,.72);color:#eee;border-radius:50%;cursor:pointer}
+.project-view{height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,34vw)}
+.project-media{min-width:0;height:100%;display:flex;align-items:center;justify-content:center;padding:5vw;background:#050505;overflow:hidden}
+.project-media .visual{width:min(48vh,420px);height:min(78vh,700px);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.project-media .caption{display:none}
+.project-copy{border-left:1px solid #262626;padding:clamp(70px,9vw,130px) clamp(28px,5vw,72px) 50px;display:flex;flex-direction:column;justify-content:center}
+.project-copy>span{font-size:9px;letter-spacing:.13em;opacity:.45}
+.project-copy h2{font-size:clamp(34px,4vw,64px);line-height:.94;letter-spacing:-.055em;margin:10px 0 24px;font-weight:500}
+.project-copy>p{font-size:13px;line-height:1.6;color:#999;max-width:440px}
+.project-details{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:28px 0;border-top:1px solid #292929;border-bottom:1px solid #292929;padding:18px 0}
+.project-details div{display:flex;flex-direction:column;gap:5px}.project-details small{font-size:8px;letter-spacing:.12em;color:#666}.project-details b{font-size:11px;font-weight:400}
+.project-note{margin-top:0}
+@media(max-width:760px){
+ dialog#modal{overflow:auto}
+ .project-view{height:auto;min-height:100%;grid-template-columns:1fr}
+ .project-media{height:64vh;padding:65px 25px 25px}
+ .project-media .visual{height:48vh;width:min(70vw,300px)}
+ .project-copy{border-left:0;border-top:1px solid #262626;padding:32px 22px 55px}
+}
+
+/* V2.3 fixes */
+.tile{isolation:isolate}
+.tile::before,.tile::after{border-radius:inherit;overflow:hidden}
+.tile::after{
+  inset:0;
+  background:
+    radial-gradient(circle at var(--mx,50%) var(--my,50%),
+    rgba(255,255,255,.30) 0%,
+    rgba(255,255,255,.13) 17%,
+    rgba(255,255,255,.035) 36%,
+    transparent 58%);
+  filter:blur(3px);
+  mix-blend-mode:soft-light;
+  z-index:3;
+}
+.tile::before{
+  inset:0;
+  z-index:4;
+  background:linear-gradient(112deg,transparent 20%,rgba(255,255,255,.04) 38%,rgba(255,255,255,.20) 50%,rgba(255,255,255,.04) 62%,transparent 80%);
+}
+.tile .visual{position:relative;z-index:1}
+
+/* Fullscreen project transition */
+dialog#modal{
+  opacity:0;
+  transform:scale(.985);
+  transition:opacity .22s ease,transform .32s cubic-bezier(.2,.75,.2,1);
+}
+dialog#modal.is-open{opacity:1;transform:scale(1)}
+dialog#modal::backdrop{opacity:0;transition:opacity .25s ease}
+dialog#modal.is-open::backdrop{opacity:1}
+
+.project-media{position:relative}
+.expanded-asset{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;
+  opacity:0;transform:translateY(16px) scale(.965);
+  transition:opacity .38s .08s ease,transform .5s .06s cubic-bezier(.16,.8,.2,1);
+}
+dialog.is-open .expanded-asset{opacity:1;transform:none}
+.expanded-asset .caption{display:none}
+.expanded-asset .visual{
+  width:auto;height:auto;max-width:100%;max-height:82vh;
+  box-shadow:0 28px 80px rgba(0,0,0,.58);
+}
+.expanded-asset[data-ratio="9:16"] .visual{aspect-ratio:9/16;height:min(78vh,760px)}
+.expanded-asset[data-ratio="16:9"] .visual{aspect-ratio:16/9;width:min(64vw,1100px)}
+.expanded-asset[data-ratio="4:5"] .visual{aspect-ratio:4/5;height:min(75vh,720px)}
+.expanded-asset[data-ratio="1:1"] .visual{aspect-ratio:1/1;height:min(68vh,680px)}
+.expanded-asset[data-ratio="2:3"] .visual{aspect-ratio:2/3;height:min(76vh,730px)}
+
+.project-copy{
+  opacity:0;transform:translateX(20px);
+  transition:opacity .35s .16s ease,transform .45s .14s cubic-bezier(.2,.75,.2,1)
+}
+dialog.is-open .project-copy{opacity:1;transform:none}
+
+@media(max-width:760px){
+ .expanded-asset[data-ratio] .visual{max-height:50vh;max-width:82vw;width:auto;height:48vh}
+ .expanded-asset[data-ratio="16:9"] .visual{width:82vw;height:auto}
+ .expanded-asset[data-ratio="1:1"] .visual{width:65vw;height:auto}
+}
+
+/* V2.4 — media-bounded hover + reliable click interaction */
+.tile::before,.tile::after{display:none!important}
+.tile{overflow:visible}
+.tile .visual{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+}
+.tile .visual::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  opacity:0;
+  background:radial-gradient(
+    circle at var(--mx,50%) var(--my,50%),
+    rgba(255,255,255,.32) 0%,
+    rgba(255,255,255,.14) 16%,
+    rgba(255,255,255,.045) 34%,
+    transparent 58%
+  );
+  mix-blend-mode:soft-light;
+  transition:opacity .22s ease;
+}
+.tile .visual::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:6;
+  pointer-events:none;
+  opacity:0;
+  background:linear-gradient(
+    112deg,
+    transparent 18%,
+    rgba(255,255,255,.03) 36%,
+    rgba(255,255,255,.17) 49%,
+    rgba(255,255,255,.04) 61%,
+    transparent 80%
+  );
+  transform:translateX(-100%);
+  transition:opacity .2s ease,transform .6s cubic-bezier(.2,.7,.2,1);
+}
+@media (hover:hover) and (pointer:fine){
+  .tile:hover .visual::after{opacity:1}
+  .tile:hover .visual::before{opacity:.8;transform:translateX(100%)}
+  .tile:hover .visual{box-shadow:inset 0 0 0 1px rgba(255,255,255,.13)}
+}
+.tile:focus{outline:none}
+.tile:focus-visible .visual{outline:2px solid rgba(255,255,255,.8);outline-offset:3px}
+
+/* project opens over the mosaic: background remains visible and recedes */
+dialog#modal{
+  background:rgba(8,8,8,.92);
+  backdrop-filter:blur(12px);
+  transform-origin:var(--origin-x,50vw) var(--origin-y,50vh);
+}
+dialog#modal::backdrop{
+  background:rgba(0,0,0,.62);
+  backdrop-filter:blur(4px);
+}
+dialog#modal:not(.is-open){transform:scale(.92);opacity:0}
+dialog#modal.is-open{transform:scale(1);opacity:1}
+.project-view{
+  width:100%;
+  height:100%;
+  max-width:1500px;
+  margin:0 auto;
+}
+.project-media{background:rgba(3,3,3,.35)}
+.project-copy{background:rgba(10,10,10,.62);backdrop-filter:blur(12px)}
+
+/* V2.6 infinite canvas */
+.tile-clone{pointer-events:auto}
+.tile-clone .caption{opacity:.82}
+.tile-clone{transition:none}
+/* repetitions should feel identical, not like disabled background copies */
+.tile-clone .visual{opacity:1}
+
+/* V2.7 */
+.tile-clone{transition:none!important}
+.tile-clone .caption{display:none}
+/* ALL previews are intentionally uniform 9:16 crops; expanded view still uses each project's real format. */
+
+/* V2.8 */
+#viewport{cursor:default}
+#viewport.dragging{cursor:grabbing}
+@media (hover:hover) and (pointer:fine){
+  #viewport:not(.dragging){cursor:default}
+  .tile{cursor:pointer}
+}
+
+/* V2.9 */
+#viewport{cursor:default}
+.tile{cursor:pointer}
+
+/* V2.10 — fixed overview floor + compact category row */
+
+/* V2.11 — in-viewer project navigation */
+.project-nav{
+  position:fixed;top:50%;transform:translateY(-50%);
+  z-index:25;width:52px;height:52px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.24);
+  background:rgba(10,10,10,.58);backdrop-filter:blur(10px);
+  color:#eee;align-items:center;justify-content:center;
+  font-size:22px;cursor:pointer;
+  transition:background .2s,border-color .2s,transform .2s;
+}
+.project-prev{left:22px}.project-next{right:22px}
+.project-nav:hover{background:#eee;color:#111;border-color:#eee;transform:translateY(-50%) scale(1.05)}
+.project-media.switching .expanded-asset{opacity:0;transform:translateX(18px) scale(.985)}
+.project-copy.switching{opacity:.25;transform:translateX(10px)}
+@media(max-width:760px){
+ .project-nav{width:42px;height:42px;top:35%}
+ .project-prev{left:10px}.project-next{right:10px}
+}
+
+/* V2.12 — visual depth while zooming toward a project */
+.tile{
+  transition:
+    left .55s cubic-bezier(.2,.75,.2,1),
+    top .55s cubic-bezier(.2,.75,.2,1),
+    width .55s,height .55s,
+    opacity .28s ease,
+    filter .34s ease,
+    transform .32s ease;
+}
+#world.approaching .tile.approach-neighbor{
+  opacity:calc(1 - (var(--approach,0) * .68));
+  filter:brightness(calc(1 - (var(--approach,0) * .40))) blur(calc(var(--approach,0) * 1.15px));
+  transform:scale(calc(1 - (var(--approach,0) * .025)));
+}
+#world.approaching .tile.approach-focus{
+  opacity:1;
+  filter:none;
+  transform:scale(calc(1 + (var(--approach,0) * .045)));
+  z-index:30;
+}
+#world.approaching .tile.approach-focus .visual{
+  box-shadow:
+    0 28px 75px rgba(0,0,0,calc(.40 + (var(--approach,0) * .30))),
+    0 0 0 1px rgba(255,255,255,calc(.05 + (var(--approach,0) * .13)));
+}
+
+/* V2.13 — About */
+#aboutModal{
+  width:100vw;max-width:none;height:100vh;max-height:none;margin:0;padding:0;
+  border:0;background:#0a0a0a;color:#eee;
+  opacity:0;transform:translateY(12px);
+  transition:opacity .26s ease,transform .42s cubic-bezier(.16,.8,.2,1);
+}
+#aboutModal.is-open{opacity:1;transform:none}
+#aboutModal::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
+.about-close{
+  position:fixed;right:24px;top:22px;z-index:20;width:44px;height:44px;
+  border-radius:50%;border:1px solid #3a3a3a;background:rgba(10,10,10,.72);
+  color:#eee;font-size:22px;cursor:pointer
+}
+.about-shell{min-height:100%;display:grid;grid-template-columns:minmax(320px,42vw) 1fr}
+.about-photo{min-height:100vh;padding:70px 0 70px 70px;display:flex;align-items:center}
+.about-photo-placeholder{
+  width:100%;height:min(78vh,850px);background:
+  radial-gradient(circle at 55% 38%,#343434 0,#1d1d1d 30%,#101010 68%);
+  border:1px solid #292929;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:24px;box-sizing:border-box
+}
+.about-photo-placeholder span{font-size:10px;letter-spacing:.15em}
+.about-photo-placeholder small{font-size:9px;color:#777;margin-top:5px}
+.about-content{
+  padding:clamp(90px,10vh,130px) clamp(48px,6vw,100px) 70px;
+  display:flex;flex-direction:column;justify-content:center
+}
+.about-kicker{font-size:9px!important;letter-spacing:.16em;color:#777!important;margin:0 0 26px!important}
+.about-content h1{
+  max-width:900px;font-size:clamp(36px,4.2vw,72px);line-height:.98;
+  letter-spacing:-.055em;font-weight:450;margin:0 0 44px
+}
+.about-intro{display:grid;grid-template-columns:1fr 1fr;gap:38px;max-width:880px}
+.about-intro p{font-size:13px;line-height:1.65;color:#aaa;margin:0}
+.about-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:50px;
+  border-top:1px solid #292929;max-width:880px
+}
+.about-grid>div{padding:18px 24px 20px 0;border-bottom:1px solid #292929}
+.about-grid>div:nth-child(odd){border-right:1px solid #292929}
+.about-grid>div:nth-child(even){padding-left:24px}
+.about-grid small,.about-bottom small{font-size:8px;letter-spacing:.14em;color:#666}
+.about-grid p,.about-bottom p{font-size:11px;line-height:1.45;margin:7px 0 0;color:#ddd}
+.about-bottom{
+  max-width:880px;display:grid;grid-template-columns:1fr auto;gap:40px;
+  padding-top:24px;align-items:end
+}
+.about-links{display:flex;gap:22px}
+.about-links a{color:#eee;text-decoration:none;font-size:10px;border-bottom:1px solid #555;padding-bottom:3px}
+.about-links a:hover{border-color:#eee}
+@media(max-width:850px){
+ #aboutModal{overflow:auto}
+ .about-shell{grid-template-columns:1fr}
+ .about-photo{min-height:0;padding:70px 20px 20px}
+ .about-photo-placeholder{height:60vh}
+ .about-content{padding:45px 22px 70px}
+ .about-intro{grid-template-columns:1fr}
+ .about-bottom{grid-template-columns:1fr}
+}
+
+/* V2.14 bug fixes */
+.tile.hidden,
+#world.approaching .tile.hidden,
+#world.approaching .tile.hidden.approach-neighbor,
+#world.approaching .tile.hidden.approach-focus{
+  opacity:0!important;
+  pointer-events:none!important;
+  visibility:hidden!important;
+  filter:none!important;
+  transform:none!important;
+}
+#world.approaching .tile:not(.hidden).approach-focus{visibility:visible}
+
+/* =========================================================
+   V2.15 — CENTERED IMMERSIVE PROJECT VIEWER
+   ========================================================= */
+#modal{
+  width:100vw!important;
+  max-width:none!important;
+  height:100vh!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:
+    radial-gradient(circle at 49% 48%,rgba(40,38,35,.26),transparent 43%),
+    #0a0a0a!important;
+  overflow:hidden!important;
+}
+#modal::backdrop{background:#090909}
+
+/* Keep portfolio identity visible and quiet */
+#modal .close{
+  position:fixed!important;
+  top:22px!important;
+  right:26px!important;
+  z-index:60!important;
+}
+
+/* The existing modal inner wrapper becomes a full-screen stage. */
+#modal .modal-inner,
+#modal .project-layout,
+#modal .modal-content{
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:0!important;
+  position:relative!important;
+  display:block!important;
+}
+
+/* MEDIA: genuinely centered in the viewport, independent of copy width. */
+#modal .project-media{
+  position:absolute!important;
+  inset:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:68px 0 58px!important;
+  box-sizing:border-box!important;
+  pointer-events:none;
+}
+#modal .expanded-asset{
+  pointer-events:auto;
+  max-height:calc(100vh - 126px)!important;
+  max-width:min(46vw,760px)!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0!important;
+  box-shadow:0 28px 90px rgba(0,0,0,.46)!important;
+}
+/* Respect actual aspect ratio while keeping the asset central. */
+#modal .expanded-asset[data-ratio="9:16"]{
+  height:calc(100vh - 126px)!important;
+  width:auto!important;
+  aspect-ratio:9/16!important;
+}
+#modal .expanded-asset[data-ratio="16:9"]{
+  width:min(62vw,1080px)!important;
+  height:auto!important;
+  aspect-ratio:16/9!important;
+}
+#modal .expanded-asset[data-ratio="1:1"]{
+  height:min(72vh,760px)!important;
+  width:auto!important;
+  aspect-ratio:1/1!important;
+}
+#modal .expanded-asset[data-ratio="4:5"],
+#modal .expanded-asset[data-ratio="2:3"]{
+  height:min(78vh,820px)!important;
+  width:auto!important;
+}
+
+/* COPY: compact lower-right editorial card, no giant side column. */
+#modal .project-copy{
+  position:absolute!important;
+  z-index:35!important;
+  left:calc(50% + min(23vw,380px) + 44px)!important;
+  right:clamp(26px,4vw,72px)!important;
+  bottom:clamp(62px,8vh,105px)!important;
+  width:auto!important;
+  max-width:390px!important;
+  height:auto!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0!important;
+  background:transparent!important;
+  align-self:auto!important;
+  display:block!important;
+  font-size:11px!important;
+  line-height:1.42!important;
+}
+#modal .project-copy h1,
+#modal .project-copy h2,
+#modal .project-copy .project-title{
+  font-size:clamp(18px,1.35vw,24px)!important;
+  line-height:1.1!important;
+  margin:10px 0 14px!important;
+  letter-spacing:-.025em!important;
+}
+#modal .project-copy p{
+  font-size:11px!important;
+  line-height:1.48!important;
+  color:#aaa!important;
+  margin:9px 0!important;
+}
+#modal .project-copy small,
+#modal .project-copy .label{
+  font-size:8px!important;
+  letter-spacing:.1em!important;
+}
+#modal .project-count{
+  position:absolute;
+  right:0;
+  top:39px;
+  color:#bbb;
+  font-size:10px;
+  letter-spacing:.08em;
+}
+
+/* Make metadata denser if it is represented by rows/divs. */
+#modal .project-copy dl,
+#modal .project-copy .meta,
+#modal .project-copy .project-meta{
+  border-top:1px solid #3a3a3a!important;
+  padding-top:10px!important;
+  margin-top:10px!important;
+}
+#modal .project-copy dt,
+#modal .project-copy dd,
+#modal .project-copy .meta-row{
+  font-size:10px!important;
+  line-height:1.4!important;
+  margin:0!important;
+}
+
+/* Navigation arrows flank the centered media instead of screen edges. */
+#modal .project-prev{
+  left:calc(50% - min(23vw,380px) - 92px)!important;
+}
+#modal .project-next{
+  right:calc(50% - min(23vw,380px) - 92px)!important;
+}
+#modal .project-nav{
+  width:48px!important;
+  height:48px!important;
+  background:rgba(12,12,12,.44)!important;
+  border-color:rgba(255,255,255,.28)!important;
+}
+
+/* Wide work: keep description low/right without competing with the image. */
+#modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+  bottom:28px!important;
+  max-width:350px!important;
+}
+
+/* Responsive fallback */
+@media(max-width:1050px){
+  #modal .expanded-asset[data-ratio="9:16"]{height:calc(100vh - 150px)!important}
+  #modal .project-copy{
+    left:auto!important;
+    right:24px!important;
+    bottom:32px!important;
+    max-width:300px!important;
+    padding:12px!important;
+    background:rgba(10,10,10,.76)!important;
+    backdrop-filter:blur(12px);
+  }
+  #modal .project-prev{left:18px!important}
+  #modal .project-next{right:18px!important}
+}
+@media(max-width:720px){
+  #modal{overflow:auto!important}
+  #modal .project-media{
+    position:relative!important;
+    height:72vh!important;
+    padding:70px 18px 20px!important;
+  }
+  #modal .expanded-asset[data-ratio="9:16"]{height:100%!important;max-width:88vw!important}
+  #modal .expanded-asset[data-ratio="16:9"]{width:92vw!important}
+  #modal .project-copy{
+    position:relative!important;
+    left:auto!important;right:auto!important;bottom:auto!important;
+    max-width:none!important;
+    margin:0 22px 50px!important;
+    background:transparent!important;
+    padding:0!important;
+  }
+}
+
+/* =========================================================
+   V2.16 — Viewer copy position refinement
+   ========================================================= */
+
+/* Bring description closer to the centered artwork/video. */
+#modal .project-copy{
+  left:calc(50% + min(23vw,380px) + 16px)!important;
+  right:auto!important;
+  width:min(350px,24vw)!important;
+  max-width:350px!important;
+}
+
+/* Remove the grey divider/side line from the description area. */
+#modal .project-copy,
+#modal .project-copy::before,
+#modal .project-copy::after{
+  border-left:0!important;
+  border-right:0!important;
+}
+#modal .project-copy::before,
+#modal .project-copy::after{
+  display:none!important;
+  content:none!important;
+}
+
+/* Also remove any inherited vertical divider on wrappers around the copy. */
+#modal .project-copy > *,
+#modal .project-info,
+#modal .project-details{
+  border-left-color:transparent!important;
+}
+
+/* Keep the compact metadata's horizontal separator only. */
+#modal .project-copy dl,
+#modal .project-copy .meta,
+#modal .project-copy .project-meta{
+  border-left:0!important;
+}
+
+/* 16:9 still stays close to the media rather than drifting to viewport edge. */
+#modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+  left:calc(50% + min(31vw,540px) + 16px)!important;
+  width:min(310px,20vw)!important;
+}
+
+/* At intermediate widths, keep copy adjacent without overlapping the media. */
+@media(max-width:1200px) and (min-width:1051px){
+  #modal .project-copy{
+    left:calc(50% + min(23vw,330px) + 14px)!important;
+    width:min(300px,23vw)!important;
+  }
+}
+
+/* =========================================================
+   V2.17 — lock description to the media's lower-right corner
+   Reference: copy begins close to the right edge of the ad and
+   its bottom never extends below the ad.
+   ========================================================= */
+
+/* 9:16 viewer:
+   media height = calc(100vh - 126px)
+   media width  = that height * 9/16.
+   This lets the copy anchor to the REAL right edge of the ad,
+   instead of an approximate vw-based column.
+*/
+#modal .project-copy{
+  left:calc(
+    50% + ((100vh - 126px) * 9 / 32) + 28px
+  )!important;
+  right:auto!important;
+
+  /* Bottom of copy aligns to bottom of the centered 9:16 asset.
+     Asset has 63px of vertical breathing room on each side. */
+  bottom:63px!important;
+
+  width:330px!important;
+  max-width:330px!important;
+  max-height:42vh!important;
+  overflow:hidden!important;
+
+  padding:0!important;
+  margin:0!important;
+  transform:none!important;
+}
+
+/* Remove any visual side rule completely. */
+#modal .project-copy,
+#modal .project-copy *{
+  border-left:none!important;
+}
+
+/* Compact the copy so the whole block stays inside the media height. */
+#modal .project-copy h1,
+#modal .project-copy h2,
+#modal .project-copy .project-title{
+  margin:8px 0 10px!important;
+}
+#modal .project-copy p{
+  margin:6px 0!important;
+  line-height:1.38!important;
+}
+#modal .project-copy dl,
+#modal .project-copy .meta,
+#modal .project-copy .project-meta{
+  margin-top:8px!important;
+  padding-top:8px!important;
+}
+
+/* For landscape work, anchor copy to its actual centered media edge too. */
+#modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+  left:calc(50% + min(31vw,540px) + 28px)!important;
+  bottom:calc(50% - min(17.4375vw,303.75px))!important;
+  width:300px!important;
+  max-width:300px!important;
+}
+
+/* Square and poster-like work: keep the same "attached to media" logic. */
+#modal:has(.expanded-asset[data-ratio="1:1"]) .project-copy{
+  left:calc(50% + min(36vh,380px) + 28px)!important;
+  bottom:calc(50% - min(36vh,380px))!important;
+}
+#modal:has(.expanded-asset[data-ratio="4:5"]) .project-copy{
+  left:calc(50% + min(31.2vh,328px) + 28px)!important;
+  bottom:calc(50% - min(39vh,410px))!important;
+}
+#modal:has(.expanded-asset[data-ratio="2:3"]) .project-copy{
+  left:calc(50% + min(26vh,273px) + 28px)!important;
+  bottom:calc(50% - min(39vh,410px))!important;
+}
+
+/* Do not let older V2.15/V2.16 intermediate breakpoint rules push it away. */
+@media(min-width:1051px){
+  #modal .project-copy{
+    right:auto!important;
+  }
+}
+
+/* On narrower screens keep the existing responsive overlay fallback. */
+@media(max-width:1050px){
+  #modal .project-copy{
+    left:auto!important;
+    right:24px!important;
+    bottom:32px!important;
+    width:min(300px,42vw)!important;
+    max-width:300px!important;
+    max-height:none!important;
+  }
+}
+
+/* =========================================================
+   V2.18 — FINAL VIEWER ALIGNMENT
+   One layout rule for every format:
+   [ media ][ compact copy ]
+   The pair is centered as a composition, while media remains dominant.
+   Copy bottom never passes the media bottom.
+   ========================================================= */
+
+@media(min-width:1051px){
+  #modal .project-view{
+    position:absolute!important;
+    inset:0!important;
+    display:grid!important;
+    grid-template-columns:auto 330px!important;
+    column-gap:28px!important;
+    justify-content:center!important;
+    align-items:center!important;
+    padding:63px 70px!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:100%!important;
+  }
+
+  #modal .project-media{
+    position:relative!important;
+    inset:auto!important;
+    width:auto!important;
+    height:calc(100vh - 126px)!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    box-sizing:border-box!important;
+  }
+
+  #modal .expanded-asset{
+    position:relative!important;
+    margin:0!important;
+    flex:0 0 auto!important;
+  }
+
+  /* Copy participates in the SAME grid as the media, eliminating
+     viewport-based drift on CTV / landscape / square formats. */
+  #modal .project-copy{
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    width:330px!important;
+    max-width:330px!important;
+    max-height:none!important;
+    overflow:visible!important;
+    align-self:end!important;
+    justify-self:start!important;
+    margin:0 0 0 0!important;
+    padding:0 0 12px 0!important;
+    transform:none!important;
+    background:transparent!important;
+    backdrop-filter:none!important;
+  }
+
+  /* Lift it slightly above the exact media baseline, as requested. */
+  #modal .project-copy{
+    translate:0 -14px;
+  }
+
+  /* Kill all old per-ratio offsets. */
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-copy,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy,
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-copy,
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-copy,
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-copy{
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    width:330px!important;
+    max-width:330px!important;
+    margin:0!important;
+  }
+
+  /* Keep landscape/CTV close too: no giant right-side jump. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-view{
+    grid-template-columns:auto 300px!important;
+    column-gap:28px!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+    width:300px!important;
+    max-width:300px!important;
+  }
+
+  /* Arrows stay around the media/composition instead of following copy offsets. */
+  #modal .project-prev{left:clamp(24px,14vw,250px)!important}
+  #modal .project-next{right:clamp(24px,14vw,250px)!important}
+}
+
+/* Content simplification: category/title + short intro + type/format only. */
+#modal .project-note{display:none!important}
+#modal .project-details{
+  margin-top:14px!important;
+  padding-top:12px!important;
+  padding-bottom:0!important;
+  border-top:1px solid #333!important;
+  border-bottom:0!important;
+}
+#modal .project-details + *{display:none!important}
+
+/* No final bottom rule under the metadata. */
+#modal .project-copy,
+#modal .project-details,
+#modal .project-details > div:last-child{
+  border-bottom:none!important;
+}
+
+/* =========================================================
+   V2.19 — CTV / 16:9 SPECIAL VIEWER
+   Only landscape CTV projects use the reference layout:
+   centered preview + compact information row underneath.
+   All other formats keep the V2.18 side-description layout.
+   ========================================================= */
+
+@media(min-width:1051px){
+  /* CTV becomes a vertically stacked composition. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-view{
+    position:absolute!important;
+    inset:0!important;
+    display:grid!important;
+    grid-template-columns:minmax(0, 1fr)!important;
+    grid-template-rows:auto auto!important;
+    row-gap:18px!important;
+    column-gap:0!important;
+    justify-items:center!important;
+    align-content:center!important;
+    padding:64px 90px 54px!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Preview stays centered and gets the visual priority. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-media{
+    position:relative!important;
+    inset:auto!important;
+    width:min(68vw, 1120px)!important;
+    height:auto!important;
+    padding:0!important;
+    margin:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .expanded-asset{
+    width:100%!important;
+    max-width:none!important;
+    height:auto!important;
+    max-height:68vh!important;
+    aspect-ratio:16/9!important;
+    margin:0!important;
+  }
+
+  /* Info bar directly below the CTV, matching the supplied comp. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    translate:none!important;
+    align-self:start!important;
+    justify-self:center!important;
+    width:min(68vw,1120px)!important;
+    max-width:min(68vw,1120px)!important;
+    min-height:0!important;
+    padding:0 2px!important;
+    margin:0!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1.45fr) minmax(260px,.8fr)!important;
+    grid-template-rows:auto auto auto!important;
+    column-gap:42px!important;
+    background:transparent!important;
+    overflow:visible!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) #modalCat{
+    grid-column:1;
+    grid-row:1;
+    align-self:end;
+  }
+  #modal:has(.expanded-asset[data-ratio="16:9"]) #modalTitle{
+    grid-column:1;
+    grid-row:2;
+    margin:7px 0 8px!important;
+    font-size:clamp(19px,1.55vw,28px)!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="16:9"]) #modalDesc{
+    grid-column:1;
+    grid-row:3;
+    margin:0!important;
+    max-width:580px!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-details{
+    grid-column:2;
+    grid-row:1 / span 3;
+    align-self:start;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:28px!important;
+    margin:4px 0 0!important;
+    padding:14px 0 0!important;
+    border-top:1px solid #333!important;
+    border-bottom:0!important;
+  }
+
+  /* CTV arrows flank the preview, not the text. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-prev{
+    left:clamp(28px,6vw,110px)!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-next{
+    right:clamp(28px,6vw,110px)!important;
+  }
+}
+
+/* =========================================================
+   V2.20 — exact centering + CTV width lock
+   ========================================================= */
+
+@media(min-width:1051px){
+
+  /* ---------------------------------------------------------
+     NON-CTV PROJECTS
+     The artwork itself — not artwork+copy — is centered exactly
+     on the viewport. Copy is absolutely attached to its right,
+     so it can never pull the artwork left.
+     --------------------------------------------------------- */
+  #modal .project-view{
+    position:absolute!important;
+    inset:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    padding:63px 0!important;
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:100%!important;
+  }
+
+  #modal .project-media{
+    position:relative!important;
+    inset:auto!important;
+    flex:0 0 auto!important;
+    width:auto!important;
+    height:calc(100vh - 126px)!important;
+    padding:0!important;
+    margin:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+
+  /* Copy no longer participates in centering calculations. */
+  #modal .project-copy{
+    position:absolute!important;
+    left:calc(50% + ((100vh - 126px) * 9 / 32) + 28px)!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:77px!important; /* 63px media baseline + 14px lift */
+    translate:none!important;
+    width:330px!important;
+    max-width:330px!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  /* Navigation is symmetrical around the centered artwork. */
+  #modal .project-prev{
+    left:calc(50% - ((100vh - 126px) * 9 / 32) - 112px)!important;
+    right:auto!important;
+  }
+  #modal .project-next{
+    right:calc(50% - ((100vh - 126px) * 9 / 32) - 112px)!important;
+    left:auto!important;
+  }
+
+  /* Square / poster ratios: artwork stays centered; only copy anchor changes
+     to the actual right edge of the centered asset. */
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-copy{
+    left:calc(50% + min(36vh,380px) + 28px)!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-copy{
+    left:calc(50% + min(31.2vh,328px) + 28px)!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-copy{
+    left:calc(50% + min(26vh,273px) + 28px)!important;
+  }
+
+  /* ---------------------------------------------------------
+     CTV / 16:9
+     Exact shared width for preview AND everything underneath.
+     --------------------------------------------------------- */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-view{
+    --ctv-width:min(68vw,1120px);
+    position:absolute!important;
+    inset:0!important;
+    display:grid!important;
+    grid-template-columns:var(--ctv-width)!important;
+    grid-template-rows:auto auto!important;
+    row-gap:18px!important;
+    justify-content:center!important;
+    justify-items:stretch!important;
+    align-content:center!important;
+    padding:64px 0 54px!important;
+    box-sizing:border-box!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-media{
+    grid-column:1!important;
+    grid-row:1!important;
+    position:relative!important;
+    width:var(--ctv-width)!important;
+    height:auto!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .expanded-asset{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    height:auto!important;
+    aspect-ratio:16/9!important;
+    margin:0!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+    grid-column:1!important;
+    grid-row:2!important;
+    position:relative!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+    padding:0!important;
+    translate:none!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1.45fr) minmax(260px,.8fr)!important;
+    grid-template-rows:auto auto auto!important;
+    column-gap:42px!important;
+    overflow:hidden!important;
+  }
+
+  /* The right metadata column and its line must end exactly
+     at the CTV preview's right edge. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-details{
+    grid-column:2!important;
+    grid-row:1 / span 3!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    margin:4px 0 0!important;
+    padding:14px 0 0!important;
+    border-top:1px solid #333!important;
+    overflow:hidden!important;
+  }
+
+  /* Prevent pseudo-elements / inherited rules from extending the line. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy::before,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy::after,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-details::before,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-details::after{
+    display:none!important;
+    content:none!important;
+  }
+
+  /* CTV arrows symmetrical around the centered preview. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-prev{
+    left:calc(50% - (var(--ctv-width) / 2) - 92px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-next{
+    right:calc(50% - (var(--ctv-width) / 2) - 92px)!important;
+    left:auto!important;
+  }
+}
+
+/* =========================================================
+   V2.21 — HARD CENTERING FIX
+   The media itself is positioned from the viewport center.
+   Description is attached afterwards and never participates
+   in centering.
+   ========================================================= */
+
+@media(min-width:1051px){
+
+  /* ---------- ALL NON-CTV FORMATS ---------- */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-view{
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    width:100vw!important;
+    max-width:none!important;
+    height:100vh!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  /* THIS is the centering anchor: exact viewport 50/50. */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-media{
+    position:absolute!important;
+    left:50%!important;
+    top:50%!important;
+    right:auto!important;
+    bottom:auto!important;
+    transform:translate(-50%,-50%)!important;
+
+    width:auto!important;
+    height:calc(100vh - 126px)!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:0!important;
+
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    overflow:visible!important;
+  }
+
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .expanded-asset{
+    margin:0!important;
+    flex:none!important;
+  }
+
+  /* 9:16 copy: attach AFTER the exact centered asset. */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy{
+    position:absolute!important;
+    left:calc(50% + ((100vh - 126px) * 9 / 32) + 28px)!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:77px!important;
+    translate:none!important;
+    transform:none!important;
+    width:330px!important;
+    max-width:330px!important;
+    margin:0!important;
+    padding:0!important;
+  }
+
+  /* Correct attachment point for the other real aspect ratios. */
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-copy{
+    left:calc(50% + min(36vh,380px) + 28px)!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-copy{
+    left:calc(50% + min(31.2vh,328px) + 28px)!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-copy{
+    left:calc(50% + min(26vh,273px) + 28px)!important;
+  }
+
+  /* Arrows are independently symmetrical around the viewport center. */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-prev{
+    left:calc(50% - ((100vh - 126px) * 9 / 32) - 112px)!important;
+    right:auto!important;
+  }
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-next{
+    right:calc(50% - ((100vh - 126px) * 9 / 32) - 112px)!important;
+    left:auto!important;
+  }
+
+  /* ---------- CTV / 16:9 ---------- */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-view{
+    --ctv-width:min(68vw,1120px);
+    position:absolute!important;
+    inset:0!important;
+    display:grid!important;
+    grid-template-columns:var(--ctv-width)!important;
+    grid-template-rows:auto auto!important;
+    row-gap:18px!important;
+    justify-content:center!important;
+    justify-items:stretch!important;
+    align-content:center!important;
+    width:100vw!important;
+    max-width:none!important;
+    height:100vh!important;
+    margin:0!important;
+    padding:54px 0!important;
+    box-sizing:border-box!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-media,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+    width:var(--ctv-width)!important;
+    max-width:var(--ctv-width)!important;
+    min-width:var(--ctv-width)!important;
+    box-sizing:border-box!important;
+    justify-self:center!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-copy{
+    overflow:hidden!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+
+  /* Left text begins exactly at preview left.
+     Right metadata ends slightly INSIDE preview right so no rule can protrude. */
+  #modal:has(.expanded-asset[data-ratio="16:9"]) #modalCat,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) #modalTitle,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) #modalDesc{
+    margin-left:0!important;
+    padding-left:0!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-details{
+    width:calc(100% - 2px)!important;
+    max-width:calc(100% - 2px)!important;
+    justify-self:end!important;
+    margin-left:0!important;
+    margin-right:2px!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-details::before,
+  #modal:has(.expanded-asset[data-ratio="16:9"]) .project-details::after{
+    display:none!important;
+    content:none!important;
+  }
+}
+
+/* =========================================================
+   V2.23 — ARROWS BACK TO VERTICAL CENTER + COPY BASELINE FIX
+   IMPORTANT:
+   - CTV / 16:9 untouched.
+   - Artwork stays independently centered.
+   - Prev/next arrows stay vertically centered (50% Y).
+   - For 1:1 / 2:3 / 4:5 arrows are pushed farther OUTSIDE.
+   - Description may NEVER extend below the artwork bottom.
+   ========================================================= */
+
+@media(min-width:1051px){
+
+  /* ---------- NON-CTV: arrows centered vertically ---------- */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-prev,
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-next{
+    top:50%!important;
+    bottom:auto!important;
+    transform:translateY(-50%)!important;
+  }
+
+  /* 9:16 — preserve the spacing that was already working */
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-prev{
+    left:calc(50% - ((100vh - 126px) * 9 / 32) - 112px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-next{
+    right:calc(50% - ((100vh - 126px) * 9 / 32) - 112px)!important;
+    left:auto!important;
+  }
+
+  /* 1:1 — farther away from artwork */
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-prev{
+    left:calc(50% - (min(72vh,760px) / 2) - 118px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-next{
+    right:calc(50% - (min(72vh,760px) / 2) - 118px)!important;
+    left:auto!important;
+  }
+
+  /* 4:5 — farther away from artwork */
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-prev{
+    left:calc(50% - (min(78vh,820px) * .4) - 118px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-next{
+    right:calc(50% - (min(78vh,820px) * .4) - 118px)!important;
+    left:auto!important;
+  }
+
+  /* 2:3 — farther away from artwork */
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-prev{
+    left:calc(50% - (min(78vh,820px) / 3) - 118px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-next{
+    right:calc(50% - (min(78vh,820px) / 3) - 118px)!important;
+    left:auto!important;
+  }
+
+  /* ---------- COPY: lower red-line limit = artwork bottom ---------- */
+
+  /* 9:16 */
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-copy{
+    left:calc(50% + ((100vh - 126px) * 9 / 32) + 28px)!important;
+    bottom:63px!important; /* exact artwork baseline */
+    top:auto!important;
+  }
+
+  /* 1:1 */
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-copy{
+    left:calc(50% + (min(72vh,760px) / 2) + 28px)!important;
+    bottom:calc(50% - (min(72vh,760px) / 2))!important;
+    top:auto!important;
+  }
+
+  /* 4:5 */
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-copy{
+    left:calc(50% + (min(78vh,820px) * .4) + 28px)!important;
+    bottom:calc(50% - (min(78vh,820px) / 2))!important;
+    top:auto!important;
+  }
+
+  /* 2:3 */
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-copy{
+    left:calc(50% + (min(78vh,820px) / 3) + 28px)!important;
+    bottom:calc(50% - (min(78vh,820px) / 2))!important;
+    top:auto!important;
+  }
+
+  /* Copy cannot leak below its baseline through margins/padding. */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+    box-sizing:border-box!important;
+  }
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy > *:last-child{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+    border-bottom:0!important;
+  }
+}
+
+/* =========================================================
+   V2.24 — MATCH APPROVED SCREENSHOTS
+   NON-CTV ONLY. CTV / 16:9 IS UNTOUCHED.
+
+   Exact composition rule:
+   - artwork centered independently in viewport
+   - arrows centered vertically on artwork/screen
+   - arrows sit OUTSIDE artwork with visible air
+   - copy is attached to the right of artwork
+   - copy BOTTOM = artwork BOTTOM (hard baseline)
+   - nothing from copy may exist below artwork bottom
+   ========================================================= */
+
+@media (min-width:1051px) {
+
+  /* --- CENTER THE ARTWORK, NEVER THE ARTWORK+COPY GROUP --- */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-view{
+    position:absolute!important;
+    inset:0!important;
+    width:100vw!important;
+    height:100vh!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:0!important;
+    display:block!important;
+  }
+
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-media{
+    position:absolute!important;
+    left:50%!important;
+    top:50%!important;
+    right:auto!important;
+    bottom:auto!important;
+    transform:translate(-50%,-50%)!important;
+    margin:0!important;
+    padding:0!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    overflow:visible!important;
+  }
+
+  /* --- ARROWS: EXACTLY MID-HEIGHT, OUTSIDE THE ARTWORK --- */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-prev,
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-next{
+    position:absolute!important;
+    top:50%!important;
+    bottom:auto!important;
+    transform:translateY(-50%)!important;
+    margin:0!important;
+  }
+
+  /* 9:16 */
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-prev{
+    left:calc(50% - ((100vh - 126px) * 9 / 32) - 86px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-next{
+    right:calc(50% - ((100vh - 126px) * 9 / 32) - 86px)!important;
+    left:auto!important;
+  }
+
+  /* 1:1 */
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-prev{
+    left:calc(50% - (min(72vh,760px) / 2) - 86px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-next{
+    right:calc(50% - (min(72vh,760px) / 2) - 86px)!important;
+    left:auto!important;
+  }
+
+  /* 4:5 */
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-prev{
+    left:calc(50% - (min(78vh,820px) * .4) - 86px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-next{
+    right:calc(50% - (min(78vh,820px) * .4) - 86px)!important;
+    left:auto!important;
+  }
+
+  /* 2:3 */
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-prev{
+    left:calc(50% - (min(78vh,820px) / 3) - 86px)!important;
+    right:auto!important;
+  }
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-next{
+    right:calc(50% - (min(78vh,820px) / 3) - 86px)!important;
+    left:auto!important;
+  }
+
+  /* --- COPY: ITS BOTTOM IS THE ARTWORK BOTTOM --- */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy{
+    position:absolute!important;
+    top:auto!important;
+    right:auto!important;
+    width:330px!important;
+    max-width:330px!important;
+    margin:0!important;
+    padding:0!important;
+    transform:none!important;
+    translate:none!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+
+  /* 9:16: artwork bottom = 63px with current viewer sizing */
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-copy{
+    left:calc(50% + ((100vh - 126px) * 9 / 32) + 28px)!important;
+    bottom:63px!important;
+  }
+
+  /* 1:1 */
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-copy{
+    left:calc(50% + (min(72vh,760px) / 2) + 28px)!important;
+    bottom:calc(50% - (min(72vh,760px) / 2))!important;
+  }
+
+  /* 4:5 */
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-copy{
+    left:calc(50% + (min(78vh,820px) * .4) + 28px)!important;
+    bottom:calc(50% - (min(78vh,820px) / 2))!important;
+  }
+
+  /* 2:3 */
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-copy{
+    left:calc(50% + (min(78vh,820px) / 3) + 28px)!important;
+    bottom:calc(50% - (min(78vh,820px) / 2))!important;
+  }
+
+  /* HARD STOP: last visible row is the metadata row.
+     No paragraph/rule/margin may hang under the artwork baseline. */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy > *:last-child{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+    border-bottom:0!important;
+  }
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-details{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+    border-bottom:0!important;
+  }
+}
+
+/* Keep responsive behavior sane below desktop breakpoint. */
+@media (max-width:1050px){
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy{
+    overflow:visible;
+  }
+}
+
+/* =========================================================
+   V2.26 — COPY-ONLY ALIGNMENT FIX
+   IMPORTANT: navigation and media geometry are intentionally NOT
+   touched here. This keeps the approved V2.24 arrows/centering.
+   Only the non-CTV copy panel is aligned to the approved guides.
+   ========================================================= */
+@media (min-width:1051px){
+  /* 9:16 — left edge aligns with the LEFT edge of the existing
+     right navigation circle; bottom aligns with media bottom. */
+  #modal:has(.expanded-asset[data-ratio="9:16"]) .project-copy{
+    left:calc(50% + ((100vh - 126px) * 9 / 32) + 38px)!important;
+    bottom:63px!important;
+    top:auto!important;
+  }
+
+  /* 1:1 */
+  #modal:has(.expanded-asset[data-ratio="1:1"]) .project-copy{
+    left:calc(50% + (min(72vh,760px) / 2) + 38px)!important;
+    bottom:calc(50% - (min(72vh,760px) / 2))!important;
+    top:auto!important;
+  }
+
+  /* 4:5 */
+  #modal:has(.expanded-asset[data-ratio="4:5"]) .project-copy{
+    left:calc(50% + (min(78vh,820px) * .4) + 38px)!important;
+    bottom:calc(50% - (min(78vh,820px) / 2))!important;
+    top:auto!important;
+  }
+
+  /* 2:3 */
+  #modal:has(.expanded-asset[data-ratio="2:3"]) .project-copy{
+    left:calc(50% + (min(78vh,820px) / 3) + 38px)!important;
+    bottom:calc(50% - (min(78vh,820px) / 2))!important;
+    top:auto!important;
+  }
+
+  /* Hard lower limit: no copy content can extend below the media. */
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+    overflow:hidden!important;
+    box-sizing:border-box!important;
+  }
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-copy > *:last-child,
+  #modal:not(:has(.expanded-asset[data-ratio="16:9"])) .project-details{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+    border-bottom:0!important;
+  }
+}
+
+/* V2.27 — real portfolio media */
+.visual.real-media{padding:0!important;background:#111!important;overflow:hidden}
+.visual.real-media video{
+  display:block;width:100%;height:100%;object-fit:cover;background:#111;
+}
+.expanded-asset .visual.real-media video{object-fit:contain}
+.tile .visual.real-media::before,
+.tile .visual.real-media::after{pointer-events:none}
+
+/* V2.29 — 9:16 CTV mosaic card; native 16:9 in expanded viewer */
+.tile[data-cat="ctv"] .visual.ctv-portrait-preview{position:relative;aspect-ratio:9/16!important;width:100%;height:auto!important;overflow:hidden!important;background:#090909!important}
+.ctv-portrait-preview .ctv-preview-bg{position:absolute!important;inset:-5%!important;width:110%!important;height:110%!important;object-fit:cover!important;filter:blur(20px) brightness(.38)!important;transform:scale(1.08)!important;opacity:.82!important}
+.ctv-portrait-preview .ctv-preview-main{position:absolute!important;left:7%!important;top:50%!important;width:86%!important;height:auto!important;aspect-ratio:16/9!important;object-fit:contain!important;transform:translateY(-50%)!important;background:#000!important;box-shadow:0 16px 44px rgba(0,0,0,.48)}
