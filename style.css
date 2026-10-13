@@ -1518,3 +1518,28 @@ dialog#modal.is-open{transform:scale(1);opacity:1}
 .tile[data-cat="ctv"] .visual.ctv-portrait-preview{position:relative;aspect-ratio:9/16!important;width:100%;height:auto!important;overflow:hidden!important;background:#090909!important}
 .ctv-portrait-preview .ctv-preview-bg{position:absolute!important;inset:-5%!important;width:110%!important;height:110%!important;object-fit:cover!important;filter:blur(20px) brightness(.38)!important;transform:scale(1.08)!important;opacity:.82!important}
 .ctv-portrait-preview .ctv-preview-main{position:absolute!important;left:7%!important;top:50%!important;width:86%!important;height:auto!important;aspect-ratio:16/9!important;object-fit:contain!important;transform:translateY(-50%)!important;background:#000!important;box-shadow:0 16px 44px rgba(0,0,0,.48)}
+
+/* V2.31 — Keep category navigation on one horizontal line */
+header .filters {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+header .filters button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+header .filters::-webkit-scrollbar { display: none; }
+@media (max-width: 760px) {
+  header .filters { justify-content: flex-start; width: auto; }
+}
