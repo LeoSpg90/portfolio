@@ -5,6 +5,9 @@ let current="all",tx=-1500,ty=-1100,scale=.62,drag=false,sx=0,sy=0,bx=0,by=0,mov
 const sizes={"9:16":[150,267],"16:9":[320,180],"4:5":[190,238],"1:1":[210,210],"2:3":[175,263]};
 function visual(p,expanded=false){
   if(p.media && /\.(jpe?g|png|webp|gif|avif)$/i.test(p.media)){
+    if(!expanded && p.cat==="static") {
+      return `<div class="visual real-media static-portrait-preview"><img class="static-preview-bg" src="${p.media}" alt="" aria-hidden="true" loading="lazy"><img class="static-preview-main" src="${p.media}" alt="${p.title}" loading="lazy"></div><span class="caption">${p.title}</span>`;
+    }
     return `<div class="visual real-media static-image"><img src="${p.media}" alt="${p.title}" loading="${expanded?"eager":"lazy"}"></div><span class="caption">${p.title}</span>`;
   }
   if(p.media){
