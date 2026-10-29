@@ -22,6 +22,16 @@ function visual(p,expanded=false){
   return `<div class="visual"><b>${p.type}</b><strong>${String(p.n).padStart(2,"0")}</strong><small>${p.ratio} · PLACEHOLDER</small></div><span class="caption">${p.title}</span>`;
 }
 projects.forEach((p,i)=>{let b=document.createElement("button");b.className="tile";b.dataset.i=i;b.innerHTML=visual(p);world.appendChild(b)});
+// The first Video Ad starts with dark frames: begin its muted thumbnail preview after the opening.
+const firstAdPreview=world.querySelector(".tile[data-i=\""+projects.findIndex(p=>p.cat==="ugc"&&p.n===1)+"\"] video");
+if(firstAdPreview){
+  firstAdPreview.addEventListener("loadedmetadata",()=>{
+    if(Number.isFinite(firstAdPreview.duration)&&firstAdPreview.duration>2){
+      firstAdPreview.currentTime=Math.min(1.5,firstAdPreview.duration-0.25);
+    }
+  },{once:true});
+}
+
 const filterDefs=[["all","ALL"],...Object.entries(catNames)];
 filterDefs.forEach(([key,label])=>{
   let b=document.createElement("button");
